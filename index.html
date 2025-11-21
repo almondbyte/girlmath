@@ -79,7 +79,13 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 select-none">
+<!-- 
+    MODIFICATION: 
+    Changed 'items-center' to 'items-start' to align the calculator to the top.
+    Reduced 'p-4' (padding: 1rem) to 'pt-2' (padding-top: 0.5rem) to bring it closer to the top edge 
+    while keeping the horizontal padding from the default layout for responsiveness.
+-->
+<body class="flex items-start justify-center pt-2 px-4 select-none">
 
     <!-- Main Calculator Container -->
     <div class="glass-panel w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[90vh] max-h-[800px]">
