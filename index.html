@@ -19,9 +19,8 @@
         body {
             font-family: 'Quicksand', sans-serif;
             background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
-            /* Set height to full viewport height for centering */
-            height: 100vh; 
-            overflow: hidden;
+            /* Use h-screen for full viewport height and remove overflow: hidden for better mobile compatibility */
+            height: 100vh;
             touch-action: manipulation;
         }
 
@@ -31,9 +30,6 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.8);
-            /* Add margin-bottom to ensure it doesn't look too low when vertically centered */
-            margin-bottom: auto; 
-            margin-top: 1rem; /* Extra push down from the very top */
         }
 
         /* Button Styles */
@@ -83,16 +79,8 @@
         }
     </style>
 </head>
-<!-- 
-    MODIFICATION: 
-    1. Changed 'items-start' back to 'items-center' to vertically center content in tall screens.
-    2. Changed 'pt-2 px-4' to 'p-4' (default padding for consistency).
-    3. Added a custom CSS block to .glass-panel: 
-       - `margin-bottom: auto;` - This pushes the calculator towards the top when the screen is very tall.
-       - `margin-top: 1rem;` - This ensures it has a small gap from the very top.
-    This combination keeps it vertically balanced but weighted toward the top.
--->
-<body class="flex items-center justify-center p-4 select-none">
+<!-- Added h-screen for full height centering and ensured proper padding for mobile -->
+<body class="flex items-center justify-center h-screen p-4 select-none">
 
     <!-- Main Calculator Container -->
     <div class="glass-panel w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[90vh] max-h-[800px]">
@@ -307,7 +295,7 @@
             if (op === '*' && operand > 1 && r > 50 && Math.random() > 0.6) return "Buying in bulk is financially responsible 📉";
             if (r === 69) return "Nice. 😏";
             if (r === 420) return "Blaze it 🔥";
-            if (r === 666) return "Spooky vibes 👻";
+            if (r === 666) return "Spooky 👻";
             if (r > 0 && r < 5) return "Basically free 💅";
             if (r >= 5 && r < 20) return "Coffee money ☕";
             if (r >= 20 && r < 50) return "Girl dinner price 🥗";
