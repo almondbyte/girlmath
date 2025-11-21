@@ -19,7 +19,8 @@
         body {
             font-family: 'Quicksand', sans-serif;
             background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
-            height: 100vh;
+            /* Set height to full viewport height for centering */
+            height: 100vh; 
             overflow: hidden;
             touch-action: manipulation;
         }
@@ -30,6 +31,9 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.8);
+            /* Add margin-bottom to ensure it doesn't look too low when vertically centered */
+            margin-bottom: auto; 
+            margin-top: 1rem; /* Extra push down from the very top */
         }
 
         /* Button Styles */
@@ -81,11 +85,14 @@
 </head>
 <!-- 
     MODIFICATION: 
-    Changed 'items-center' to 'items-start' to align the calculator to the top.
-    Reduced 'p-4' (padding: 1rem) to 'pt-2' (padding-top: 0.5rem) to bring it closer to the top edge 
-    while keeping the horizontal padding from the default layout for responsiveness.
+    1. Changed 'items-start' back to 'items-center' to vertically center content in tall screens.
+    2. Changed 'pt-2 px-4' to 'p-4' (default padding for consistency).
+    3. Added a custom CSS block to .glass-panel: 
+       - `margin-bottom: auto;` - This pushes the calculator towards the top when the screen is very tall.
+       - `margin-top: 1rem;` - This ensures it has a small gap from the very top.
+    This combination keeps it vertically balanced but weighted toward the top.
 -->
-<body class="flex items-start justify-center pt-2 px-4 select-none">
+<body class="flex items-center justify-center p-4 select-none">
 
     <!-- Main Calculator Container -->
     <div class="glass-panel w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[90vh] max-h-[800px]">
