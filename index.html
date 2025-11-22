@@ -62,11 +62,15 @@
 
         /* Text resizing classes */
         .text-mode {
-            font-size: 1.5rem;
+            font-size: 1.25rem; /* Slightly smaller base for longer messages */
             font-weight: 700;
             color: #db2777;
             white-space: normal;
-            line-height: 1.2;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
         }
         .number-mode {
             font-size: 3rem;
@@ -75,11 +79,10 @@
         }
         @media (min-width: 640px) {
             .number-mode { font-size: 3.5rem; }
-            .text-mode { font-size: 1.75rem; }
+            .text-mode { font-size: 1.5rem; }
         }
     </style>
 </head>
-<!-- Added h-screen for full height centering and ensured proper padding for mobile -->
 <body class="flex items-center justify-center h-screen p-4 select-none">
 
     <!-- Main Calculator Container -->
@@ -159,8 +162,6 @@
         let operator = undefined;
         let isGirlMath = false;
         let resetScreen = false;
-        let lastOpForContext = null;
-        let lastOperandForContext = null;
 
         const displayElement = document.getElementById('display');
         const prevInputElement = document.getElementById('prev-input');
@@ -186,8 +187,6 @@
             if (resetScreen) {
                 currentInput = '';
                 resetScreen = false;
-                lastOpForContext = null;
-                lastOperandForContext = null;
             }
             if (number === '.' && currentInput.includes('.')) return;
             if (currentInput === '0' && number !== '.') {
@@ -228,8 +227,6 @@
             previousInput = '';
             operator = undefined;
             resetScreen = false;
-            lastOpForContext = null;
-            lastOperandForContext = null;
             displayElement.innerText = '0';
             prevInputElement.innerText = '';
             displayElement.classList.add('number-mode');
@@ -240,8 +237,6 @@
             let computation;
             const prev = parseFloat(previousInput);
             const current = parseFloat(currentInput);
-            lastOpForContext = operator;
-            lastOperandForContext = current;
 
             if (isNaN(prev) || isNaN(current)) return;
 
@@ -271,7 +266,7 @@
             }
 
             if (showGirlMathText) {
-                const funnyText = getGirlMathTranslation(currentInput, lastOpForContext, lastOperandForContext);
+                const funnyText = getGirlMathTranslation(currentInput);
                 displayElement.classList.remove('number-mode');
                 displayElement.classList.add('text-mode');
                 displayElement.classList.remove('fade-in');
@@ -285,25 +280,154 @@
             }
         }
 
-        function getGirlMathTranslation(result, op, operand) {
+        function getGirlMathTranslation(result) {
+            // Handle Non-Finite
+            if (result === "Infinity" || result === Infinity || isNaN(result)) {
+                return "Math broke. Relatable.";
+            }
+
             const r = parseFloat(result);
-            if (result === "Infinity" || result === Infinity) return "Undefined, just like my situationship 💔";
-            if (r === 0) return "Literally free ✨";
+            
+            // Handle Negatives (Keep it profitable!)
             if (r < 0) return "You made a profit! 🤑";
-            if (op === '/' && r > 0 && r < 100) return "It counts as free if we split it 👯‍♀️";
-            if (op === '-' && r > 0 && Math.random() > 0.5) return "Money saved = Money earned 🧠";
-            if (op === '*' && operand > 1 && r > 50 && Math.random() > 0.6) return "Buying in bulk is financially responsible 📉";
-            if (r === 69) return "Nice. 😏";
-            if (r === 420) return "Blaze it 🔥";
-            if (r === 666) return "Spooky 👻";
-            if (r > 0 && r < 5) return "Basically free 💅";
-            if (r >= 5 && r < 20) return "Coffee money ☕";
-            if (r >= 20 && r < 50) return "Girl dinner price 🥗";
-            if (r >= 50 && r < 100) return "Treat yourself 🛍️";
-            if (r >= 100 && r < 300) return "Investment piece 👜";
-            if (r >= 300 && r < 1000) return "Self-care essential 💆‍♀️";
-            if (r >= 1000) return "Generational wealth 💸";
-            return r;
+
+            // Round down for easier integer logic matching the list
+            // For example: 3.5 becomes 3. 
+            const val = Math.floor(r);
+
+            // --- 1. Single Digits (0-9) ---
+            if (val === 0) return "Free 💅";
+            if (val === 1) return "One? Giving main character energy.";
+            if (val === 2) return "Two? A duo. A pair. A vibe.";
+            if (val === 3) return "Threesomes of problems you’re ignoring 💖";
+            if (val === 4) return "Four? Two twos. Math queen.";
+            if (val === 5) return "✨high-five energy✨";
+            if (val === 6) return "Six… spicy number.";
+            if (val === 7) return "Seven... lucky number.";
+            if (val === 8) return "Eight looks like a curvy hourglass. Obsessed.";
+            if (val === 9) return "Nine? Girl, this feels like almost doing work.";
+            if (val === 10) return "10/10 would buy again.";
+
+            // --- 2. EXACT Matches (Specific Milestones) ---
+            // These take precedence over ranges if they are exactly hit (or very close ints)
+            if (val === 100) return "100% THAT GIRL 💅✨";
+            if (val === 300) return "That movie with the hole in the ground?";
+            if (val === 420) return "Blaze it gurl 🔥";
+            if (val === 500) return "500 = ✨Half a thousand, half the chaos✨";
+            if (val === 700) return "700? That’s luxury math.";
+            if (val === 1000) return "A THOUSAND?? Miss Girl is doing business.";
+            if (val === 2000) return "2000? A whole millennium moment.";
+            if (val === 5000) return "5K?? Babe that’s influencer PR package money.";
+            if (val === 10000) return "10k?? BABE THAT’S A DOWN PAYMENT.";
+            if (val === 100000) return "100K?? Influencer status: unlocked.";
+            if (val === 1000000) return "A MILLION?? Girl math says that’s free.";
+            if (val === 10000000) return "TEN. MILLION. BITCHEZ.";
+            if (val === 1000000000) return "A BILLION?? Jeff Bezos is shaking.";
+
+            // --- 3. Ranges ---
+            if (val >= 11 && val <= 19) return "Teen numbers? Ugh. So dramatic.";
+            if (val >= 20 && val <= 29) return "Twenty-something, just like every influencer.";
+            if (val >= 30 && val <= 39) return "Thirty? Rich auntie era.";
+            if (val >= 40 && val <= 49) return "Forty is the new flirty, babe.";
+            if (val >= 50 && val <= 59) return "Fifty? You’ve entered discount shopping mode.";
+            // Note: Prompt list skipped 69 explicitly but had 60-68 and 70-79.
+            // We will map 60-69 to the 60s message to fill the gap safely unless 69 is special.
+            if (val === 69) return "Nice. 😏"; 
+            if (val >= 60 && val <= 69) return "Enough to get your nails done.";
+            if (val >= 70 && val <= 79) return "Seventy? Grandma energy but still hot.";
+            if (val >= 80 && val <= 89) return "Eighties vibes: neon, perms, chaos.";
+            if (val >= 90 && val <= 99) return "Ninety? Wow. You’re basically a legend.";
+            
+            if (val >= 101 && val <= 150) return "Big numbers. Big drama.";
+            if (val >= 151 && val <= 199) return "This number feels like student loan trauma.";
+            if (val >= 200 && val <= 250) return "200? That’s like… two hundreds. Math prodigy!";
+            if (val >= 251 && val <= 299) return "Almost 300? Go off, overachiever.";
+            
+            if (val >= 301 && val <= 350) return "Baby big-girl numbers.";
+            if (val >= 351 && val <= 399) return "Approaching 400? Scary. Like my inbox.";
+            if (val >= 400 && val <= 450) return "You’re officially in the 400s: elite tier.";
+            if (val >= 451 && val <= 499) return "This feels expensive.";
+            
+            if (val >= 501 && val <= 550) return "This number has hot diva energy.";
+            if (val >= 551 && val <= 599) return "Giving ‘I don’t check my bank app’ vibes.";
+            if (val >= 600 && val <= 650) return "Girl this is like my credit score on a good day.";
+            if (val >= 651 && val <= 699) return "Almost 700? Rare bimbo genius moment.";
+            
+            if (val >= 701 && val <= 750) return "You’re basically calculating in stilettos.";
+            if (val >= 751 && val <= 799) return "BIG BRAIN BUBBLEGUM ENERGY 💗";
+            if (val >= 800 && val <= 850) return "850? Credit score level slayyyyy.";
+            if (val >= 851 && val <= 899) return "This number has CEO aura.";
+            if (val >= 900 && val <= 999) return "Almost 1000? Babe stop you’re showing off.";
+            
+            // 1000 handled in exacts above
+            if (val >= 1001 && val <= 1200) return "Four digits? We rich now.";
+            if (val >= 1201 && val <= 1500) return "This feels like rent I refuse to pay.";
+            if (val >= 1501 && val <= 1800) return "Big number, bigger delusion.";
+            if (val >= 1801 && val <= 1999) return "Approaching 2k like it won’t hurt.";
+            
+            // 2000 handled in exacts above
+            if (val >= 2001 && val <= 2500) return "Math but make it fashion.";
+            if (val >= 2501 && val <= 3000) return "This number wears designer.";
+            if (val >= 3001 && val <= 3500) return "Your total gives ‘I deserve this.’";
+            if (val >= 3501 && val <= 3999) return "This is girl math: divide until it feels cheap.";
+            if (val >= 4000 && val <= 4500) return "Four thousand? That’s ‘soft life’ level.";
+            if (val >= 4501 && val <= 4999) return "This number needs a nap. Same.";
+            
+            // 5000 handled in exacts above
+            if (val >= 5001 && val <= 5500) return "Girl this number is a tax bracket.";
+            if (val >= 5501 && val <= 6000) return "Sexy six-ish thousand energy.";
+            if (val >= 6001 && val <= 6500) return "You’re rich rich? Okay mommy.";
+            if (val >= 6501 && val <= 7000) return "Girl this number is giving luxury spa retreat.";
+            if (val >= 7001 && val <= 7500) return "High number, high maintenance.";
+            if (val >= 7501 && val <= 8000) return "8K territory?? Are you secretly royalty?";
+            if (val >= 8001 && val <= 9000) return "This number is too big. I choose denial.";
+            if (val >= 9001 && val <= 9999) return "Not over 9000. Anime boyfriend moment.";
+            
+            // 10000 handled in exacts above
+            if (val >= 10001 && val <= 15000) return "This number is louder than my inner monologue.";
+            if (val >= 15001 && val <= 20000) return "Girl that is NOT on sale.";
+            if (val >= 20001 && val <= 25000) return "Twenty-five thousand? Sugar daddy detected.";
+            if (val >= 25001 && val <= 30000) return "This number needs a therapist.";
+            if (val >= 30001 && val <= 35000) return "You are too glamorous for normal math.";
+            if (val >= 35001 && val <= 40000) return "Forty thousand?!? Bimbo billionaire vibes.";
+            if (val >= 40001 && val <= 45000) return "Big number. Bigger hair.";
+            if (val >= 45001 && val <= 50000) return "Fifty thousand??? We do NOT tell IRS.";
+            if (val >= 50001 && val <= 60000) return "This number has a yacht.";
+            if (val >= 60001 && val <= 70000) return "Girl this is executive slay.";
+            if (val >= 70001 && val <= 80000) return "80k? Corporate baddie detected.";
+            if (val >= 80001 && val <= 90000) return "This number is wearing a blazer AND pink heels.";
+            if (val >= 90001 && val <= 99999) return "Math but make it generational wealth.";
+            
+            // 100,000 handled in exacts above
+            if (val >= 100001 && val <= 200000) return "I can’t count this high but I support you.";
+            if (val >= 200001 && val <= 500000) return "Numbers this big require champagne.";
+            if (val >= 500001 && val <= 999999) return "You’re basically a private island.";
+            
+            // 1,000,000 handled in exacts above
+            if (val >= 1000001 && val <= 2000000) return "Millionaire delulu era.";
+            if (val >= 2000001 && val <= 5000000) return "This number is too rich for me.";
+            if (val >= 5000001 && val <= 9000000) return "Penthouse math.";
+            if (val >= 9000001 && val <= 9999999) return "Just round up to ten mil, babe.";
+            
+            // 10,000,000 handled in exacts above
+            if (val >= 10000001 && val <= 20000000) return "You’re beyond math now. Just vibes.";
+            if (val >= 20000001 && val <= 50000000) return "This number has a jet.";
+            if (val >= 50000001 && val <= 100000000) return "CEO math mode activated.";
+            if (val >= 100000001 && val <= 500000000) return "Baby this is wealth wealth.";
+            if (val >= 500000001 && val <= 999999999) return "You own several countries emotionally.";
+            
+            // 1,000,000,000 handled in exacts above
+            if (val >= 1000000000 && val <= 2000000000) return "Billionaire Barbie era.";
+            if (val > 2000000000 && val <= 5000000000) return "This number comes with a villain arc.";
+            if (val > 5000000000 && val <= 10000000000) return "Girl math cannot compute that level of slay.";
+            if (val > 10000000000 && val <= 20000000000) return "This is ‘evil rich’ movie character territory.";
+            if (val > 20000000000 && val <= 50000000000) return "You have monogrammed helicopters.";
+            if (val > 50000000000 && val <= 75000000000) return "This number has a private moon.";
+            if (val > 75000000000 && val <= 100000000000) return "Elon who? YOU are the chaos now.";
+            if (val > 100000000000) return "You are money. Money is you.";
+
+            // Fallback for anything else not covered (unlikely given the ranges)
+            return "Just buy it. Life is short. 💅";
         }
     </script>
 </body>
