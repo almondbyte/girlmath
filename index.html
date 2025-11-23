@@ -19,9 +19,10 @@
         body {
             font-family: 'Quicksand', sans-serif;
             background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
-            /* Use h-screen for full viewport height and remove overflow: hidden for better mobile compatibility */
             height: 100vh;
-            touch-action: manipulation;
+            /* Prevent pull-to-refresh and standard touch behaviors on body to treat it like an app */
+            touch-action: none;
+            overflow: hidden;
         }
 
         /* Glassmorphism */
@@ -34,17 +35,26 @@
 
         /* Button Styles */
         .calc-btn {
-            transition: all 0.15s ease;
+            transition: all 0.1s ease;
             box-shadow: 0 4px 6px -1px rgba(236, 72, 153, 0.2), 0 2px 4px -1px rgba(236, 72, 153, 0.1);
-        }
-        .calc-btn:active {
-            transform: scale(0.95);
-            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            /* Crucial for mobile: disable double-tap zoom and scroll delays on buttons */
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* Toggle Switch */
+        /* Visual feedback state (triggered by JS for instant response) */
+        .calc-btn.active-press, 
+        .calc-btn:active {
+            transform: scale(0.92);
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        /* Toggle Switch Animation Fix */
         .toggle-checkbox:checked {
-            right: 0;
+            /* Use transform for reliable sliding instead of right:0 */
+            transform: translateX(100%); 
             border-color: #db2777;
         }
         .toggle-checkbox:checked + .toggle-label {
@@ -62,7 +72,7 @@
 
         /* Text resizing classes */
         .text-mode {
-            font-size: 1.25rem; /* Slightly smaller base for longer messages */
+            font-size: 1.25rem;
             font-weight: 700;
             color: #db2777;
             white-space: normal;
@@ -89,20 +99,22 @@
     <div class="glass-panel w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col h-[90vh] max-h-[800px]">
         
         <!-- Header / Mode Toggle -->
-        <div class="p-6 pb-2 flex justify-between items-center">
+        <div class="p-6 pb-2 flex justify-between items-center z-10">
             <div class="flex flex-col">
                 <span class="text-xs font-bold text-pink-500 uppercase tracking-widest">Mode</span>
                 <span id="mode-text" class="text-pink-600 font-bold text-lg">Standard</span>
             </div>
             
-            <div class="relative inline-block w-14 mr-2 align-middle select-none transition duration-200 ease-in">
+            <div class="relative inline-block w-14 mr-2 align-middle select-none">
+                <!-- Toggle Input (The Knob) -->
                 <input type="checkbox" name="toggle" id="girl-math-toggle" class="toggle-checkbox absolute block w-7 h-7 rounded-full bg-white border-4 border-pink-200 appearance-none cursor-pointer transition-all duration-300 ease-in-out shadow-sm z-10 top-0 left-0"/>
+                <!-- Toggle Track -->
                 <label for="girl-math-toggle" class="toggle-label block overflow-hidden h-7 rounded-full bg-pink-200 cursor-pointer transition-colors duration-300 ease-in-out"></label>
             </div>
         </div>
 
         <!-- Display Screen -->
-        <div class="px-6 py-4 text-right flex flex-col justify-end flex-grow min-h-[180px]">
+        <div class="px-6 py-4 text-right flex flex-col justify-end flex-grow min-h-[180px] z-0">
             <!-- Previous Input -->
             <div id="prev-input" class="text-pink-400 text-sm min-h-[1.5rem] font-semibold tracking-wide opacity-70 truncate mb-2"></div>
             
@@ -111,7 +123,7 @@
         </div>
 
         <!-- Keypad -->
-        <div class="bg-white/60 p-6 rounded-t-[2.5rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+        <div class="bg-white/60 p-6 rounded-t-[2.5rem] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] z-20 relative">
             <div class="grid grid-cols-4 gap-3 sm:gap-4">
                 <!-- Row 1 -->
                 <button onclick="clearDisplay()" class="calc-btn col-span-1 aspect-square rounded-2xl bg-pink-100 text-pink-600 font-bold text-xl flex items-center justify-center hover:bg-pink-200">AC</button>
@@ -157,6 +169,35 @@
             });
         }
 
+        /* --- TOUCH FIX: FAST CLICK & GHOST CLICK PREVENTION --- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.calc-btn');
+            
+            buttons.forEach(btn => {
+                // Handle TouchStart: Trigger immediately to avoid 300ms delay
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault(); // Prevent ghost mouse events and scrolling on button
+                    
+                    // Add visual feedback manually since we prevented default
+                    btn.classList.add('active-press');
+                    
+                    // Trigger the click logic
+                    btn.click();
+                    
+                    // Remove visual feedback after short delay
+                    setTimeout(() => {
+                        btn.classList.remove('active-press');
+                    }, 100);
+                }, { passive: false });
+
+                // Handle Touchend: Clean up just in case
+                btn.addEventListener('touchend', (e) => {
+                     e.preventDefault();
+                     btn.classList.remove('active-press');
+                }, { passive: false });
+            });
+        });
+
         let currentInput = '';
         let previousInput = '';
         let operator = undefined;
@@ -188,7 +229,15 @@
                 currentInput = '';
                 resetScreen = false;
             }
-            if (number === '.' && currentInput.includes('.')) return;
+            if (number === '.') {
+                if (currentInput.includes('.')) return;
+                if (currentInput === '') {
+                    currentInput = '0.'; 
+                    updateDisplay(false);
+                    return;
+                }
+            }
+            
             if (currentInput === '0' && number !== '.') {
                 currentInput = number;
             } else {
@@ -233,6 +282,10 @@
             displayElement.classList.remove('text-mode');
         }
 
+        function stripPrecision(num) {
+            return Math.round(num * 1000000000) / 1000000000;
+        }
+
         function calculate(isIntermediate = false) {
             let computation;
             const prev = parseFloat(previousInput);
@@ -247,6 +300,10 @@
                 case '/': computation = current === 0 ? "Infinity" : prev / current; break;
                 case '%': computation = prev % current; break;
                 default: return;
+            }
+
+            if (computation !== "Infinity") {
+                computation = stripPrecision(computation);
             }
 
             currentInput = computation;
@@ -281,21 +338,16 @@
         }
 
         function getGirlMathTranslation(result) {
-            // Handle Non-Finite
             if (result === "Infinity" || result === Infinity || isNaN(result)) {
                 return "Math broke. Relatable.";
             }
 
             const r = parseFloat(result);
             
-            // Handle Negatives (Keep it profitable!)
             if (r < 0) return "You made a profit! 🤑";
 
-            // Round down for easier integer logic matching the list
-            // For example: 3.5 becomes 3. 
             const val = Math.floor(r);
 
-            // --- 1. Single Digits (0-9) ---
             if (val === 0) return "Free 💅";
             if (val === 1) return "One? Giving main character energy.";
             if (val === 2) return "Two? A duo. A pair. A vibe.";
@@ -308,8 +360,6 @@
             if (val === 9) return "Nine? Girl, this feels like almost doing work.";
             if (val === 10) return "10/10 would buy again.";
 
-            // --- 2. EXACT Matches (Specific Milestones) ---
-            // These take precedence over ranges if they are exactly hit (or very close ints)
             if (val === 100) return "100% THAT GIRL 💅✨";
             if (val === 300) return "That movie with the hole in the ground?";
             if (val === 420) return "Blaze it gurl 🔥";
@@ -324,14 +374,12 @@
             if (val === 10000000) return "TEN. MILLION. BITCHEZ.";
             if (val === 1000000000) return "A BILLION?? Jeff Bezos is shaking.";
 
-            // --- 3. Ranges ---
             if (val >= 11 && val <= 19) return "Teen numbers? Ugh. So dramatic.";
             if (val >= 20 && val <= 29) return "Twenty-something, just like every influencer.";
             if (val >= 30 && val <= 39) return "Thirty? Rich auntie era.";
             if (val >= 40 && val <= 49) return "Forty is the new flirty, babe.";
             if (val >= 50 && val <= 59) return "Fifty? You’ve entered discount shopping mode.";
-            // Note: Prompt list skipped 69 explicitly but had 60-68 and 70-79.
-            // We will map 60-69 to the 60s message to fill the gap safely unless 69 is special.
+            
             if (val === 69) return "Nice. 😏"; 
             if (val >= 60 && val <= 69) return "Enough to get your nails done.";
             if (val >= 70 && val <= 79) return "Seventy? Grandma energy but still hot.";
@@ -359,13 +407,11 @@
             if (val >= 851 && val <= 899) return "This number has CEO aura.";
             if (val >= 900 && val <= 999) return "Almost 1000? Babe stop you’re showing off.";
             
-            // 1000 handled in exacts above
             if (val >= 1001 && val <= 1200) return "Four digits? We rich now.";
             if (val >= 1201 && val <= 1500) return "This feels like rent I refuse to pay.";
             if (val >= 1501 && val <= 1800) return "Big number, bigger delusion.";
             if (val >= 1801 && val <= 1999) return "Approaching 2k like it won’t hurt.";
             
-            // 2000 handled in exacts above
             if (val >= 2001 && val <= 2500) return "Math but make it fashion.";
             if (val >= 2501 && val <= 3000) return "This number wears designer.";
             if (val >= 3001 && val <= 3500) return "Your total gives ‘I deserve this.’";
@@ -373,7 +419,6 @@
             if (val >= 4000 && val <= 4500) return "Four thousand? That’s ‘soft life’ level.";
             if (val >= 4501 && val <= 4999) return "This number needs a nap. Same.";
             
-            // 5000 handled in exacts above
             if (val >= 5001 && val <= 5500) return "Girl this number is a tax bracket.";
             if (val >= 5501 && val <= 6000) return "Sexy six-ish thousand energy.";
             if (val >= 6001 && val <= 6500) return "You’re rich rich? Okay mommy.";
@@ -383,7 +428,6 @@
             if (val >= 8001 && val <= 9000) return "This number is too big. I choose denial.";
             if (val >= 9001 && val <= 9999) return "Not over 9000. Anime boyfriend moment.";
             
-            // 10000 handled in exacts above
             if (val >= 10001 && val <= 15000) return "This number is louder than my inner monologue.";
             if (val >= 15001 && val <= 20000) return "Girl that is NOT on sale.";
             if (val >= 20001 && val <= 25000) return "Twenty-five thousand? Sugar daddy detected.";
@@ -398,25 +442,21 @@
             if (val >= 80001 && val <= 90000) return "This number is wearing a blazer AND pink heels.";
             if (val >= 90001 && val <= 99999) return "Math but make it generational wealth.";
             
-            // 100,000 handled in exacts above
             if (val >= 100001 && val <= 200000) return "I can’t count this high but I support you.";
             if (val >= 200001 && val <= 500000) return "Numbers this big require champagne.";
             if (val >= 500001 && val <= 999999) return "You’re basically a private island.";
             
-            // 1,000,000 handled in exacts above
             if (val >= 1000001 && val <= 2000000) return "Millionaire delulu era.";
             if (val >= 2000001 && val <= 5000000) return "This number is too rich for me.";
             if (val >= 5000001 && val <= 9000000) return "Penthouse math.";
             if (val >= 9000001 && val <= 9999999) return "Just round up to ten mil, babe.";
             
-            // 10,000,000 handled in exacts above
             if (val >= 10000001 && val <= 20000000) return "You’re beyond math now. Just vibes.";
             if (val >= 20000001 && val <= 50000000) return "This number has a jet.";
             if (val >= 50000001 && val <= 100000000) return "CEO math mode activated.";
             if (val >= 100000001 && val <= 500000000) return "Baby this is wealth wealth.";
             if (val >= 500000001 && val <= 999999999) return "You own several countries emotionally.";
             
-            // 1,000,000,000 handled in exacts above
             if (val >= 1000000000 && val <= 2000000000) return "Billionaire Barbie era.";
             if (val > 2000000000 && val <= 5000000000) return "This number comes with a villain arc.";
             if (val > 5000000000 && val <= 10000000000) return "Girl math cannot compute that level of slay.";
@@ -426,10 +466,10 @@
             if (val > 75000000000 && val <= 100000000000) return "Elon who? YOU are the chaos now.";
             if (val > 100000000000) return "You are money. Money is you.";
 
-            // Fallback for anything else not covered (unlikely given the ranges)
             return "Just buy it. Life is short. 💅";
         }
     </script>
 </body>
 </html>
+
 
